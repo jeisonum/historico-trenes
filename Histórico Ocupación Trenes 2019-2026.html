@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Publicidad en trenes · Histórico interactivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1F4; --surface:#FFFFFF; --surface2:#F5F7F9; --ink:#000000; --muted:#5E6B78; --line:#D3D9DF;
+  --brand:#005EB8; --lime:#C4D600; --alert:#D7263D; --alertbg:#FDECEE; --navy:#005EB8; --red:#000000; --amber:#C4D600; --metro:#A9B4BF; --free:#E6EAEE; --focus:#005EB8;
+  --font:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --cond:"Plus Jakarta Sans",system-ui,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F151C; --surface:#17202A; --surface2:#1D2833; --ink:#E5EBF1; --muted:#95A3B1; --line:#2B3744;
+    --alert:#FF6B6B; --alertbg:#3A1C22; --navy:#4F95E8; --red:#F2F4F6; --amber:#C9DC1E; --metro:#56636F; --free:#222D38; --focus:#4F95E8;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F151C; --surface:#17202A; --surface2:#1D2833; --ink:#E5EBF1; --muted:#95A3B1; --line:#2B3744;
+  --alert:#FF6B6B; --alertbg:#3A1C22; --navy:#4F95E8; --red:#F2F4F6; --amber:#C9DC1E; --metro:#56636F; --free:#222D38; --focus:#4F95E8;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 90px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14.5px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.wrap{max-width:1320px;margin:0 auto;padding:0 20px 48px}
+header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;padding:22px 0 18px;border-bottom:3px solid var(--brand);margin-bottom:0}
+.brand{display:flex;align-items:center;gap:16px}
+.brand .logo{background:#fff;border-radius:8px;padding:6px 8px;display:flex;flex:none}
+.brand .logo img{height:66px;width:auto;display:block}
+@media (max-width:600px){.brand .logo img{height:50px}}
+header.top h1{font-family:var(--cond);font-weight:800;font-size:clamp(26px,3.6vw,36px);line-height:1.05;margin:0;letter-spacing:-.5px}
+header.top p{margin:6px 0 0;color:var(--muted);font-size:14px}
+.status{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.status b{color:var(--ink);font-weight:600}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:7px 12px;cursor:pointer;font-weight:600;font-size:14px}
+.btn:hover{border-color:var(--navy)}
+a.btn{color:var(--ink);text-decoration:none}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn[hidden]{display:none}
+
+/* filtros */
+.filters{position:sticky;top:0;z-index:20;background:var(--bg);padding:12px 0 12px;border-bottom:1px solid var(--line);margin-bottom:18px}
+.frow{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end}
+.fgroup{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fgroup>span{font-size:12px;color:var(--muted);font-weight:500}
+.fgroup input[type=month],.fgroup input[type=date]{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:5px 8px;font-size:14px;min-width:0}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 11px;font-size:13px;cursor:pointer;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.ms{position:relative}
+.ms>button{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:5px 30px 5px 10px;font-size:14px;cursor:pointer;min-width:170px;max-width:240px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative}
+.ms>button::after{content:"";position:absolute;right:11px;top:50%;width:7px;height:7px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-70%) rotate(45deg)}
+.ms .pop{position:absolute;top:calc(100% + 4px);left:0;width:280px;max-width:86vw;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:8px;z-index:30}
+.ms .pop[hidden]{display:none}
+.ms .pop input[type=search]{width:100%;border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:var(--surface2);margin-bottom:6px}
+.ms .opts{max-height:260px;overflow:auto}
+.ms label{display:flex;gap:8px;align-items:center;padding:4px 6px;border-radius:4px;font-size:14px;cursor:pointer}
+.ms label:hover{background:var(--surface2)}
+.ms .quick{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.ms .quick:empty{display:none}
+.ms .acts{display:flex;justify-content:space-between;padding-top:6px;border-top:1px solid var(--line);margin-top:6px}
+.linkbtn{background:none;border:0;color:var(--navy);cursor:pointer;font-size:13px;font-weight:600;padding:2px 4px}
+.toggle{display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;padding-bottom:5px}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:22px}
+.kpi{background:var(--surface);padding:14px 16px 13px}
+.kpi h3{margin:0 0 6px;font-size:13px;font-weight:500;color:var(--muted);line-height:1.25}
+.kpi .v{font-family:var(--cond);font-weight:800;font-size:32px;line-height:1;letter-spacing:-.5px}
+.kpi .alt{font-size:13px;color:var(--red);font-weight:600;margin-top:4px;display:flex;align-items:center;gap:6px}
+.kpi .alt::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--lime,#C4D600);flex:none}
+.kpi .sub{font-size:12px;color:var(--muted);margin-top:3px}
+.kpi.alert{background:var(--alertbg)}
+.kpi.alert .v{color:var(--alert)}
+.kpi.alert .sub{color:var(--alert);font-weight:600}
+.alist{display:flex;flex-direction:column;gap:6px}
+.arow{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-left:4px solid var(--alert);border-radius:6px;background:var(--surface);cursor:pointer;text-align:left;font-size:14px}
+.arow:hover{background:var(--alertbg)}
+.arow b{font-family:var(--cond);font-size:20px;color:var(--alert)}
+.arow .muted{white-space:nowrap}
+
+section.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:22px}
+.chead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px 16px;margin-bottom:10px}
+.chead h2{font-family:var(--cond);font-weight:800;font-size:21px;margin:0;line-height:1.15;letter-spacing:-.3px}
+.chead p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.legend{display:flex;gap:14px;font-size:13px;color:var(--muted);flex-wrap:wrap;align-items:center}
+.sw{display:inline-block;width:14px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}
+select.sel{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:5px 8px;font-size:14px}
+.chartbox{position:relative;height:300px}
+.chartbox.sm{height:220px}
+
+/* vias */
+.free{font-size:14px;margin:0 0 10px}
+.free b{font-family:var(--cond);font-size:20px}
+.freelist{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.freelist span{font-size:12px;border:1px solid var(--line);border-radius:4px;padding:1px 6px;background:var(--surface2)}
+.tracks{display:grid;grid-template-columns:78px 1fr;border-top:1px solid var(--line)}
+.tlabels{font-family:var(--cond);font-weight:600;font-size:12px}
+.tlabels div{height:20px;line-height:20px;padding-right:8px;text-align:right;white-space:nowrap;color:var(--muted);cursor:pointer}
+.tlabels div:hover{color:var(--ink)}
+.tlabels .hd{height:28px}
+.tscroll{overflow-x:auto;overflow-y:hidden}
+.tscroll svg{display:block}
+.seg{cursor:pointer}
+.seg.com{fill:var(--navy)}
+.seg.met{fill:var(--metro)}
+.seg.hl{fill:var(--amber)}
+.lane{fill:var(--free)}
+.tip{position:fixed;z-index:50;pointer-events:none;background:var(--ink);color:var(--bg);font-size:13px;line-height:1.35;border-radius:6px;padding:7px 10px;max-width:280px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.tip[hidden]{display:none}
+.tip b{display:block;font-weight:700}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media (max-width:860px){.two{grid-template-columns:1fr}}
+.rank{display:flex;flex-direction:column;gap:5px}
+.rk{display:grid;grid-template-columns:minmax(90px,190px) 1fr 70px;gap:10px;align-items:center;font-size:14px}
+.rk .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rk .bar{height:12px;background:var(--surface2);border-radius:2px;overflow:hidden}
+.rk .bar i{display:block;height:100%;background:var(--navy)}
+.rk .bar i.met{background:var(--metro)}
+.rk .num{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:6px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{background:var(--surface2);font-weight:600;cursor:pointer;position:sticky;top:0;user-select:none}
+th[aria-sort="ascending"]::after{content:" ▲";font-size:10px}
+th[aria-sort="descending"]::after{content:" ▼";font-size:10px}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tr.met td{color:var(--muted)}
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tools input[type=search]{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:6px 10px;min-width:220px}
+
+.detail[hidden]{display:none}
+.diag{border:1px solid var(--alert);background:var(--alertbg);color:var(--ink);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px}
+.diag[hidden]{display:none}
+.diag code{font-size:12px;word-break:break-word}
+.clientchips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 14px}
+.clientchips span{font-size:13px;border-radius:4px;padding:2px 8px;background:var(--surface2);border:1px solid var(--line)}
+.clientchips span.met{color:var(--muted)}
+
+.drop{border:2px dashed var(--line);border-radius:10px;padding:22px;text-align:center;cursor:pointer;background:var(--surface2)}
+.drop.over{border-color:var(--navy)}
+.drop p{margin:4px 0;color:var(--muted);font-size:14px}
+.drop strong{font-size:16px}
+.msgs{margin-top:12px;font-size:14px}
+.msgs ul{margin:6px 0 0;padding-left:20px}
+.msgs .ok{color:var(--navy);font-weight:600}
+.msgs .err{color:var(--red);font-weight:600}
+.settings{display:flex;flex-wrap:wrap;gap:14px 26px;margin-top:16px;align-items:flex-end}
+.settings input[type=number]{width:100px;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:5px 8px}
+.muted{color:var(--muted);font-size:13px}
+.ghbox{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.ghbox h3{margin:0 0 4px;font-size:16px;font-weight:800}
+.ghrow{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;margin-top:10px}
+.ghrow input[type=password]{width:300px;max-width:80vw;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:6px 8px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.ghrow[hidden],.linkbtn[hidden]{display:none}
+.empty{padding:26px;text-align:center;color:var(--muted)}
+@media (max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:600px){.wrap{padding:0 12px 40px}.kpi .v{font-size:28px}.chartbox{height:240px}.filters{position:static}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="logo"><img src="data:image/png;base64,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" alt="i.Co medios"></span>
+      <div>
+        <h1>Publicidad en trenes del Metro</h1>
+        <p>Histórico de campañas por coche, mes a mes desde 2019.</p>
+      </div>
+    </div>
+    <div class="status" id="status"></div>
+  </header>
+
+  <div class="filters" id="filters">
+    <div class="frow">
+      <label class="fgroup"><span>Desde</span><input type="date" id="fFrom"></label>
+      <label class="fgroup"><span>Hasta</span><input type="date" id="fTo"></label>
+      <div class="fgroup"><span>Cliente</span><div class="ms" id="msCli"></div></div>
+      <div class="fgroup"><span>Coche</span><div class="ms" id="msCoche"></div></div>
+      <div class="fgroup"><span>Tipo de tren</span><div class="chips" id="chTipo"></div></div>
+      <div class="fgroup"><span>Elemento</span><div class="chips" id="chElem"></div></div>
+      <label class="toggle"><input type="checkbox" id="fMetro" checked> Mostrar Metro en listas y vías</label>
+      <button class="linkbtn" id="fReset" type="button">Quitar filtros</button>
+    </div>
+    <div class="presets" id="presets"></div>
+  </div>
+
+  <div class="diag" id="diag" hidden></div>
+  <div class="kpis" id="kpis"></div>
+
+  <section class="card">
+    <div class="chead">
+      <div>
+        <h2 id="mTitle">Mes a mes</h2>
+        <p id="mSub">Haga clic en un mes para ver el detalle día por día y los clientes al aire.</p>
+      </div>
+      <div class="legend">
+        <label id="metricWrap">Ver <select class="sel" id="metric">
+          <option value="max">Máximo de coches al aire al mismo tiempo</option>
+          <option value="avg">Promedio de coches al aire por día</option>
+          <option value="coches">Coches con campaña en el mes</option>
+          <option value="camps">Campañas al aire en el mes</option>
+          <option value="clis">Clientes al aire en el mes</option>
+        </select></label>
+        <span><i class="sw" style="background:var(--navy)"></i>Total</span>
+        <span><i class="sw" style="background:var(--red);height:3px"></i>Sin Metro</span>
+        <span id="lgLim"><i class="sw" style="background:var(--alert)"></i>Supera el límite</span>
+      </div>
+    </div>
+    <div class="chartbox"><canvas id="cMonth" aria-label="Gráfico mensual"></canvas></div>
+  </section>
+
+  <section class="card" id="alerts" hidden>
+    <div class="chead"><div><h2>Alertas de límite</h2><p id="aSub"></p></div></div>
+    <div class="alist" id="aList"></div>
+    <button class="linkbtn" id="aMore" type="button" hidden></button>
+  </section>
+
+  <section class="card detail" id="detail" hidden>
+    <div class="chead">
+      <div><h2 id="dTitle"></h2><p id="dSub"></p></div>
+      <button class="btn" id="dClose" type="button">Cerrar detalle</button>
+    </div>
+    <div class="chartbox sm"><canvas id="cDay" aria-label="Coches al aire por día"></canvas></div>
+    <div class="clientchips" id="dClients"></div>
+    <div class="tablewrap"><table id="dTable"></table></div>
+  </section>
+
+  <section class="card">
+    <div class="chead">
+      <div>
+        <h2>Vías: qué llevaba cada coche</h2>
+        <p>Cada fila es un coche; cada tramo, una campaña. Pase el cursor o toque un tramo para ver el cliente.</p>
+      </div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--navy)"></i>Comercial</span>
+        <span><i class="sw" style="background:var(--metro)"></i>Metro</span>
+        <span><i class="sw" style="background:var(--amber)"></i>Cliente filtrado</span>
+        <span><i class="sw" style="background:var(--red);width:3px"></i>Hoy</span>
+        <span><i class="sw" style="background:var(--alert);height:4px"></i>Días sobre el límite</span>
+      </div>
+    </div>
+    <div class="free" id="free"></div>
+    <div class="tracks" id="tracks"></div>
+  </section>
+
+  <div class="two">
+    <section class="card">
+      <div class="chead"><div><h2>Clientes en el periodo</h2><p>Por días-coche al aire dentro del periodo.</p></div></div>
+      <div class="rank" id="rCli"></div>
+      <button class="linkbtn" id="rCliMore" type="button" hidden>Ver todos</button>
+    </section>
+    <section class="card">
+      <div class="chead"><div><h2>Coches en el periodo</h2><p>Días ocupados y porcentaje del periodo.</p></div></div>
+      <div class="rank" id="rCoche"></div>
+      <button class="linkbtn" id="rCocheMore" type="button" hidden>Ver todos</button>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="chead">
+      <div><h2>Campañas al aire en el periodo</h2><p id="tSub"></p></div>
+      <div class="tools">
+        <input type="search" id="tSearch" placeholder="Buscar cliente, campaña o coche">
+        <button class="btn" id="tExport" type="button" hidden>Descargar CSV</button>
+      </div>
+    </div>
+    <div class="tablewrap" style="max-height:520px;overflow:auto"><table id="tMain"></table></div>
+  </section>
+
+  <section class="card" id="datos">
+    <div class="chead">
+      <div><h2>Actualizar datos</h2><p>El tablero lee solo el archivo <b>Historico_trenes_2019-2026_Base.xlsx</b> del repositorio de GitHub. Cargue aquí el Excel nuevo, revíselo y publíquelo con el botón de abajo.</p></div>
+    </div>
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Cargar archivo de Excel">
+      <strong>Vista previa: arrastre aquí un Excel o haga clic para elegirlo</strong>
+      <p>Formatos .xlsx o .xls. El archivo se lee en este navegador; no se envía a ningún lado.</p>
+      <input type="file" id="file" accept=".xlsx,.xls,.xlsm" hidden>
+    </div>
+    <div class="msgs" id="msgs"></div>
+    <div class="settings">
+      <label class="fgroup"><span>Cliente que se excluye en "sin Metro"</span><select class="sel" id="sExcl"></select></label>
+      <label class="fgroup"><span>Límite de coches al aire a la vez</span><input type="number" id="sLim" min="1" step="1"></label>
+      <label class="fgroup"><span>El límite se cuenta sobre</span><select class="sel" id="sLimBase"><option value="total">Todas las campañas</option><option value="com">Solo comerciales (sin Metro)</option></select></label>
+      <label class="fgroup"><span>Coches disponibles para publicidad</span><input type="number" id="sFlota" min="1" step="1" placeholder="Ej. 42"></label>
+      <button class="btn" id="bRestore" type="button" hidden>Quitar la vista previa</button>
+    </div>
+    <p class="muted" id="pubNote"></p>
+    <div class="ghbox" id="ghBox">
+      <h3>Publicar en GitHub para todos</h3>
+      <p class="muted" id="ghState"></p>
+      <div class="ghrow" id="ghTokRow">
+        <label class="fgroup"><span>Llave de GitHub (token)</span><input type="password" id="ghTok" autocomplete="off" placeholder="github_pat_…"></label>
+        <button class="btn" id="ghSave" type="button">Guardar llave en este navegador</button>
+      </div>
+      <div class="ghrow">
+        <button class="btn primary" id="ghPub" type="button" disabled>Publicar este Excel en GitHub</button>
+        <button class="linkbtn" id="ghForget" type="button" hidden>Olvidar la llave</button>
+      </div>
+      <p class="muted" id="ghNote">Primero cargue el Excel arriba y revise que los datos estén bien.</p>
+    </div>
+  </section>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script type="application/json" id="dataset" data-own="1">{"rows": [["U 78M1", "UNIDAD CAF", "METRO", "30 AÑOS DE CULTURA", "2019-11-01", "2020-12-31", "", ""], ["U 80M1", "UNIDAD CAF", "METRO", "PEDRO NEL", "2020-07-01", "2020-12-31", "", ""], ["U 74M1", "UNIDAD CAF", "METRO", "FERIA DEL LIBRO", "2020-10-01", "2021-02-04", "", ""], ["U 77M1", "UNIDAD CAF", "METRO", "LECTURAS VIAJERAS", "2020-11-15", "2022-12-31", "", ""], ["U 48M1", "UNIDAD CAF", "RON VIEJO DE CALDAS", "RON VIEJO DE CALDAS 1", "2020-12-05", "2021-01-20", "", ""], ["U 51M1", "UNIDAD CAF", "RON VIEJO DE CALDAS", "RON VIEJO DE CALDAS 1", "2020-12-05", "2021-01-20", "", ""], ["U 61M1", "UNIDAD CAF", "METRO", "MEDELLÍN EN 100 PALABRAS", "2020-12-16", "2021-06-16", "", ""], ["U 50M1", "UNIDAD CAF", "RON VIEJO DE CALDAS", "RON VIEJO DE CALDAS 2", "2021-01-25", "2022-01-24", "", ""], ["U 52M1", "UNIDAD CAF", "RON VIEJO DE CALDAS", "RON VIEJO DE CALDAS 2", "2021-01-25", "2023-12-31", "INTERIOR - EXTERIOR", ""], ["U 66M1", "UNIDAD CAF", "CLARO", "CLARO P", "2021-04-20", "2022-03-21", "", ""], ["U 79M1", "UNIDAD CAF", "CLARO", "CLARO P", "2021-04-20", "2022-03-21", "", ""], ["U 51M1", "UNIDAD CAF", "VIVO", "VIVO CEL", "2021-06-08", "2021-08-22", "", ""], ["U 48M1", "UNIDAD CAF", "BETPLAY", "COPA AMERICA", "2021-07-07", "2021-08-07", "", ""], ["U 68M1", "UNIDAD CAF", "METRO", "FIESTA DEL LIBRO", "2021-09-24", "2022-03-23", "", ""], ["U 54M1", "UNIDAD CAF", "FLAMINGO", "FLAMIN HOT", "2021-10-11", "2021-11-11", "", ""], ["U 46M1", "UNIDAD CAF", "BLESSD", "NUEVO ÁLBUM", "2021-10-29", "2021-12-29", "", ""], ["U 55M1", "UNIDAD CAF", "HUAWEI", "NUEVO", "2021-11-03", "2022-01-10", "", ""], ["U 47M1", "UNIDAD CAF", "DISNEY", "ENCANTO", "2021-11-06", "2021-12-24", "", ""], ["U 61M1", "UNIDAD CAF", "BIOEXPO", "BIO EXPOSICIÓN", "2021-11-11", "2021-12-11", "", ""], ["U 54R", "UNIDAD CAF", "JOKR", "APP", "2021-11-26", "2021-12-26", "", ""], ["U 65M1", "UNIDAD CAF", "METRO", "TREN DE MUJERES", "2021-11-30", "2022-09-15", "", ""], ["U 43M1", "UNIDAD CAF", "TELEPERFORMANCE", "INSTITUCIONAL", "2021-12-14", "2022-01-23", "", ""], ["U 54M1", "UNIDAD CAF", "SONY PICTURES", "SONY PICTURES MOVIE", "2022-02-09", "2022-03-11", "", ""], ["U 46M1", "UNIDAD CAF", "FLA", "RON MEDELLÍN", "2022-02-18", "2023-02-15", "INTERIOR - EXTERIOR", ""], ["U 54M1", "UNIDAD CAF", "XIAOMI", "XIAOMI GENERACIÓN", "2022-04-07", "2022-05-06", "EXTERIOR", ""], ["U 56M1", "UNIDAD CAF", "SONY PICTURES", "SONY PICTURES LANZAMIENTO", "2022-07-30", "2022-08-29", "EXTERIOR", ""], ["U 44M1", "UNIDAD CAF", "DIAGEO", "BLACK AND WHITE", "2022-08-08", "2022-09-07", "EXTERIOR", ""], ["U 43M1", "UNIDAD CAF", "METRO DE MEDELLÍN", "CÍVICA APP", "2022-09-05", "2023-02-28", "INTERIOR - EXTERIOR", ""], ["U 45M1", "UNIDAD CAF", "METRO DE MEDELLÍN", "CÍVICA APP", "2022-09-07", "2023-02-28", "INTERIOR - EXTERIOR", ""], ["U 50M1", "UNIDAD CAF", "PEPSICO ALIMENTOS", "DORITOS", "2022-09-16", "2022-10-15", "INTERIOR - EXTERIOR", ""], ["U 44M1", "UNIDAD CAF", "MOTOROLA", "MOTOROLA CEL", "2022-10-22", "2022-11-21", "INTERIOR - EXTERIOR", ""], ["U 74M1", "UNIDAD CAF", "METRO DE MEDELLÍN", "FERIA DEL LIBRO", "2022-11-01", "2023-10-31", "INTERIOR - EXTERIOR", ""], ["U 62M1", "UNIDAD CAF", "NETFLIX", "SERIE", "2022-11-11", "2022-12-10", "INTERIOR - EXTERIOR", ""], ["U 73M1", "UNIDAD CAF", "PEPSICO", "PEPSICO ALIMENTOS", "2022-11-18", "2022-12-17", "INTERIOR - EXTERIOR", ""], ["U 48M1", "UNIDAD CAF", "GOBERNACIÓN DE ANTIOQUIA", "INSTITUCIONAL", "2022-11-25", "2023-01-24", "INTERIOR - EXTERIOR", ""], ["U 50M1", "UNIDAD CAF", "TECNO", "INSTITUCIONAL", "2022-11-28", "2022-12-27", "INTERIOR - EXTERIOR", ""], ["U 44M1", "UNIDAD CAF", "GOBERNACIÓN DE ANTIOQUIA", "INSTITUCIONAL", "2022-12-19", "2023-01-18", "INTERIOR - EXTERIOR", ""], ["U 44M1", "UNIDAD CAF", "KAMM", "VIVE UN VIAJE MUSICAL", "2023-02-08", "2023-04-10", "INTERIOR - EXTERIOR", ""], ["U 48M1", "UNIDAD CAF", "GRUPO FALCK", "EMI", "2023-04-18", "2023-05-17", "INTERIOR - EXTERIOR", ""], ["U 49M1", "UNIDAD CAF", "FALABELLA", "FALABELLA.COM", "2023-04-21", "2023-05-20", "INTERIOR - EXTERIOR", ""], ["U 44M1", "UNIDAD CAF", "FLA", "AGUARDIENTE", "2023-05-05", "2023-12-31", "INTERIOR - EXTERIOR", ""], ["U 50M1", "UNIDAD CAF", "NETFLIX", "QUEEN CHARLOTTE", "2023-05-08", "2023-06-07", "INTERIOR - EXTERIOR", ""], ["U 76M1", "UNIDAD CAF", "METRO DE MEDELLÍN", "SOSTENIBILIDAD", "2023-05-09", "2023-11-04", "INTERIOR - EXTERIOR", ""], ["U 45M1", "UNIDAD CAF", "DIAGEO J&W", "FERIA FLORES", "2023-07-13", "2023-08-12", "INTERIOR - EXTERIOR", ""], ["U 53M1", "UNIDAD CAF", "MERCADOLIBRE", "LLEGAMOS A MEDALLO", "2023-07-14", "2023-08-18", "INTERIOR - EXTERIOR", ""], ["U 44M1", "UNIDAD CAF", "FLA CR", "FERIA DE FLORES", "2023-07-22", "2023-12-31", "INTERIOR - EXTERIOR", ""], ["U 49M1", "UNIDAD CAF", "NETFLIX", "HEART OF STONE", "2023-08-10", "2023-09-09", "EXTERIOR", ""], ["U 43M1", "UNIDAD CAF", "NETFLIX", "SEX EDACTION", "2023-09-29", "2023-10-17", "EXTERIOR", ""], ["U 43M1", "UNIDAD CAF", "JACK DANIELS", "MAKE IT COUNT", "2023-11-04", "2024-01-03", "INTERIOR - EXTERIOR", ""], ["U 58M1", "UNIDAD CAF", "FLA", "KAROL G", "2023-11-16", "2023-12-31", "INTERIOR - EXTERIOR", ""], ["U 79M1", "UNIDAD CAF", "MILAGROS", "RESCATE", "2023-12-08", "2024-01-07", "INTERIOR - EXTERIOR", ""], ["U 64M1", "UNIDAD CAF", "DEPARTAMENTO DE PLANEACIÓN", "CORAZÓN VERDE", "2023-12-13", "2024-01-11", "INTERIOR - EXTERIOR", ""], ["U 78M1", "UNIDAD CAF", "NETFLIX", "REBEL MOON", "2023-12-21", "2024-01-05", "EXTERIOR", ""], ["U 60M2", "UNIDAD CAF", "MILAGROS", "RESCATE", "2024-01-10", "2024-01-24", "INTERIOR - EXTERIOR", ""], ["U 43M1", "UNIDAD CAF", "NUTRESA", "JUMBO", "2024-01-23", "2024-02-27", "INTERIOR - EXTERIOR", ""], ["U 64M1", "UNIDAD CAF", "HBO", "MAX", "2024-02-27", "2024-03-27", "INTERIOR - EXTERIOR", ""], ["U 79M1", "UNIDAD CAF", "BUCANERO", "NATURAL", "2024-03-05", "2024-05-04", "INTERIOR - EXTERIOR", ""], ["U 43M1", "UNIDAD CAF", "BETSSON", "RETO MILLONARIO", "2024-03-27", "2024-09-26", "INTERIOR - EXTERIOR", ""], ["U 73M1", "UNIDAD CAF", "NETFLIX", "BRIDGERTON", "2024-05-08", "2024-05-30", "EXTERIOR", ""], ["U 55M1", "UNIDAD CAF", "OBOTICARIO", "EQUITY", "2024-06-04", "2024-08-17", "INTERIOR - EXTERIOR", ""], ["U 72M1", "UNIDAD CAF", "PRIME VIDEO", "BETTY LA FEA", "2024-07-15", "2024-08-14", "EXTERIOR", ""], ["U 73M1", "UNIDAD CAF", "MILAGROS", "FLORECE", "2024-07-27", "2024-08-26", "INTERIOR - EXTERIOR", ""], ["U 47M1", "UNIDAD CAF", "CUEROS VÉLEZ", "FLY UP", "2024-07-29", "2024-10-07", "EXTERIOR", ""], ["U 53M1", "UNIDAD CAF", "PINTUCO", "NUEVA IMAGEN", "2024-08-01", "2024-09-30", "INTERIOR - EXTERIOR", ""], ["U 59M1", "UNIDAD CAF", "LOREAL", "ELVIVE GLYCOLIC", "2024-08-12", "2024-09-11", "EXTERIOR", ""], ["U 61M1", "UNIDAD CAF", "BANCOLOMBIA", "BAJAMOS LA TASA", "2024-08-28", "2024-09-23", "INTERIOR - EXTERIOR", ""], ["U 31A", "UNIDAD MAN", "MANZANA POSTOBÓN", "RIGO", "2024-10-11", "2024-11-26", "INTERIOR - EXTERIOR", ""], ["U 65M1", "UNIDAD CAF", "HONOR", "FALCAO", "2024-10-17", "2024-12-17", "INTERIOR - EXTERIOR", ""], ["U 49M1", "UNIDAD CAF", "SHICK", "FERXXO", "2024-10-21", "2024-11-22", "INTERIOR - EXTERIOR", ""], ["U 74M1", "UNIDAD CAF", "SMIRNOFF", "TAMARINDO", "2024-10-25", "2024-12-05", "INTERIOR - EXTERIOR", ""], ["U 76M1", "UNIDAD CAF", "UIP", "WICKED", "2024-11-09", "2024-12-09", "INTERIOR - EXTERIOR", ""], ["U 46M1", "UNIDAD CAF", "PROCTER", "H&S", "2024-11-11", "2025-01-15", "INTERIOR - EXTERIOR", ""], ["U 53M1", "UNIDAD CAF", "COKE", "NAVIDAD", "2024-11-21", "2024-12-21", "INTERIOR - EXTERIOR", ""], ["U 39A", "UNIDAD MAN", "FERXXO", "CONCIERTO", "2024-11-28", "2024-12-10", "INTERIOR - EXTERIOR", ""], ["U 49M1", "UNIDAD CAF", "TUYA", "TARJETA ÉXITO", "2024-12-05", "2025-01-08", "INTERIOR - EXTERIOR", ""], ["U 45M1", "UNIDAD CAF", "ELECTROLIT", "SABORES", "2024-12-06", "2025-01-13", "INTERIOR - EXTERIOR", ""], ["U 68M1", "UNIDAD CAF", "BANCOLOMBIA", "ALISTA TU MALETA", "2024-12-08", "2025-01-20", "INTERIOR - EXTERIOR", ""], ["U 74R", "UNIDAD CAF", "NETFLIX", "CIEN AÑOS DE SOLEDAD", "2024-12-10", "2025-01-10", "INTERIOR - EXTERIOR", ""], ["U 55M1", "UNIDAD CAF", "MILAGROS", "EXPERTOS", "2024-12-19", "2025-02-20", "INTERIOR - EXTERIOR", ""], ["U 62M1", "UNIDAD CAF", "SMART FIT", "TE DA MÁS", "2025-02-04", "2025-04-04", "INTERIOR - EXTERIOR", ""], ["U 59M1", "UNIDAD CAF", "QUATRO", "IMPREDECIBLE", "2025-02-06", "2025-03-06", "INTERIOR - EXTERIOR", ""], ["U 58M1", "UNIDAD CAF", "PEPSI", "NUEVA IMAGEN", "2025-02-14", "2025-03-14", "INTERIOR - EXTERIOR", ""], ["U 46M1", "UNIDAD CAF", "ARIEL", "TRIPLE PODER", "2025-03-07", "2025-06-15", "INTERIOR - EXTERIOR", ""], ["U 70M1", "UNIDAD CAF", "ELECTROLIT", "NUEVO SABOR", "2025-03-31", "2025-11-20", "INTERIOR - EXTERIOR", ""], ["U 59M1", "UNIDAD CAF", "LA SOLAR", "JUMBO", "2025-04-07", "2025-05-03", "INTERIOR - EXTERIOR", ""], ["U 45M2", "UNIDAD CAF", "SPRITE", "REFRESCANTE", "2025-04-15", "2025-05-15", "INTERIOR - EXTERIOR", ""], ["U 75M1", "UNIDAD CAF", "ALKOMPRAR", "EXTRAPAK SAMSUNG", "2025-04-22", "2025-05-22", "INTERIOR - EXTERIOR", ""], ["U 21A", "UNIDAD MAN", "KARATE KID", "LEYENDAS", "2025-04-28", "2025-05-27", "EXTERIOR", ""], ["U 59M1", "UNIDAD CAF", "COKE", "SHARE", "2025-05-09", "2025-08-08", "INTERIOR - EXTERIOR", ""], ["U 75M1", "UNIDAD CAF", "SKECHERS", "SLIP INS", "2025-05-26", "2025-07-05", "INTERIOR - EXTERIOR", ""], ["U 78M1", "UNIDAD CAF", "KFC", "DORITOS", "2025-06-17", "2026-03-05", "INTERIOR - EXTERIOR", ""], ["U 77M1", "UNIDAD CAF", "FAMILIA", "50 AÑOS", "2025-06-19", "2025-12-30", "INTERIOR - EXTERIOR", ""], ["U 69M1", "UNIDAD CAF", "RON VIEJO DE CALDAS", "LO TUYO ES EL LICOR DE RON", "2025-06-21", "2025-08-20", "INTERIOR - EXTERIOR", ""], ["U 46M1", "UNIDAD CAF", "PEPSICO", "H20 MANZANA", "2025-06-24", "2025-08-28", "INTERIOR - EXTERIOR", ""], ["U 52M1", "UNIDAD CAF", "ANYELUZ", "TODAS MERECEN BRILLAR", "2025-07-11", "2026-06-21", "INTERIOR - EXTERIOR", ""], ["U 45M1", "UNIDAD CAF", "FLA AGUARDIENTE", "ANTIOQUEÑO FLORES", "2025-07-14", "2025-08-14", "INTERIOR - EXTERIOR", ""], ["U 54M1", "UNIDAD CAF", "FLA", "ANTIOQUEÑO FLORES", "2025-07-16", "2025-08-18", "INTERIOR - EXTERIOR", ""], ["U 67M1", "UNIDAD CAF", "ADIDAS", "PATRIK + LEO", "2025-07-18", "2025-08-21", "INTERIOR - EXTERIOR", ""], ["U 75M1", "UNIDAD CAF", "OPELLA ALEGRA", "EN MODO ATCHU", "2025-07-28", "2025-09-04", "INTERIOR - EXTERIOR", ""], ["U 67M1", "UNIDAD CAF", "JUMBO", "RYAN CASTRO", "2025-08-28", "2025-09-30", "INTERIOR - EXTERIOR", ""], ["U 74M1", "UNIDAD CAF", "ALMACENES ÉXITO", "CARULLA 120 AÑOS", "2025-09-01", "2025-10-01", "INTERIOR - EXTERIOR", ""], ["U 62M1", "UNIDAD CAF", "ADVIL", "ESPALDA Y CUELLO", "2025-10-23", "2026-01-31", "INTERIOR - EXTERIOR", ""], ["U 54M1", "UNIDAD CAF", "RITVALES", "FRESHLYTE", "2025-10-30", "2025-11-14", "INTERIOR - EXTERIOR", ""], ["U 59M1", "UNIDAD CAF", "COKE", "ESPÍRITU NAVIDEÑO", "2025-11-01", "2026-01-08", "INTERIOR - EXTERIOR", ""], ["U 45M1", "UNIDAD CAF", "VÉLEZ", "J BALVIN", "2025-11-03", "2025-12-03", "INTERIOR - EXTERIOR", ""], ["U 46M1", "UNIDAD CAF", "UIP", "WICKED 2", "2025-11-05", "2025-12-04", "EXTERIOR", ""], ["U 61M1", "UNIDAD CAF", "ADIDAS", "CAMISETA LUCHO", "2025-11-12", "2025-12-31", "INTERIOR - EXTERIOR", ""], ["U 74M1", "UNIDAD CAF", "DECATHLON", "NAVIDAD", "2025-11-24", "2025-12-23", "INTERIOR - EXTERIOR", ""], ["U 49M1", "UNIDAD CAF", "PUNTOS COLOMBIA", "CÍVICA", "2025-11-27", "2026-06-15", "INTERIOR - EXTERIOR", ""], ["U 50M1", "UNIDAD CAF", "NEQUI", "NAVIDAD", "2025-12-01", "2025-12-31", "INTERIOR - EXTERIOR", ""], ["U 70M1", "UNIDAD CAF", "SECRETARÍA DE SALUD", "TUBERCULOSIS", "2025-12-07", "2026-01-07", "INTERIOR - EXTERIOR", ""], ["U 64M1", "UNIDAD CAF", "BANCOLOMBIA", "ABEJITA DE REGALO", "2025-12-09", "2026-01-08", "INTERIOR - EXTERIOR", ""], ["U 46M1", "UNIDAD CAF", "DAVIVIENDA", "DAVI BANK", "2025-12-22", "2026-01-21", "INTERIOR - EXTERIOR", ""], ["U 71M1", "UNIDAD CAF", "HECHIZO DE BELLEZA", "RITUAL BOTÁNICO", "2025-12-24", "2027-01-23", "INTERIOR - EXTERIOR", ""], ["U 67M1", "UNIDAD CAF", "ELECTROLIT", "CIENCIA EN HIDRATACIÓN", "2025-12-29", "2026-12-31", "INTERIOR - EXTERIOR", ""], ["U 59M1", "UNIDAD CAF", "COKE", "MUNDIAL", "2026-02-09", "2026-03-09", "INTERIOR - EXTERIOR", ""], ["U 64M1", "UNIDAD CAF", "KFC", "DIPEANDO", "2026-03-04", "2026-05-22", "INTERIOR - EXTERIOR", ""], ["U 50M1", "UNIDAD CAF", "NATURA", "PRODUCTOS CABELLOS", "2026-03-16", "2026-04-16", "INTERIOR - EXTERIOR", ""], ["U 59M1", "UNIDAD CAF", "UIP", "MARIO BROS", "2026-03-21", "2026-04-20", "EXTERIOR", ""], ["U 66M1", "UNIDAD CAF", "SPRITE", "LA SOLAR", "2026-04-06", "2026-05-11", "INTERIOR - EXTERIOR", ""], ["U 47M1", "UNIDAD CAF", "ORAL B", "NUEVO CEPILLO", "2026-04-13", "2026-06-13", "INTERIOR - EXTERIOR", ""], ["U 74M1", "UNIDAD CAF", "TIENDAS ARA", "ANTIOQUIA", "2026-04-17", "2026-05-03", "INTERIOR - EXTERIOR", ""], ["U 45M1", "UNIDAD CAF", "RYAN CASTRO", "SOLD OUT", "2026-04-25", "2026-05-10", "EXTERIOR", ""], ["U 59M1", "UNIDAD CAF", "ALKOMPRAR", "SAMGUNG", "2026-05-05", "2026-06-05", "INTERIOR - EXTERIOR", ""], ["U 45M1", "UNIDAD CAF", "MALUMA", "LOCO POR VOLVER", "2026-05-12", "2026-06-13", "EXTERIOR", ""], ["U 62M1", "UNIDAD CAF", "DOLEX", "5 VECES MÁS RÁPIDO", "2026-05-12", "2026-08-08", "INTERIOR - EXTERIOR", ""], ["U 58M1", "UNIDAD CAF", "KFC", "ANTOJO INCLUIDO", "2026-06-02", "2026-12-31", "INTERIOR - EXTERIOR", ""], ["U 64M1", "UNIDAD CAF", "ADIDAS", "LUCHO DÍAS", "2026-06-03", "2026-07-08", "INTERIOR - EXTERIOR", ""], ["U 74M1", "UNIDAD CAF", "COKE", "MEJOR SENSACIÓN", "2026-06-05", "2026-08-04", "INTERIOR - EXTERIOR", ""], ["U 78M1", "UNIDAD CAF", "PONTO HAIR", "CREMA PARA PEINAR", "2026-06-09", "2026-09-02", "INTERIOR - EXTERIOR", ""], ["U 59M1", "UNIDAD CAF", "POSTOBÓN", "COLOMBIANA", "2026-06-15", "2026-07-26", "INTERIOR - EXTERIOR", ""], ["U 49M1", "UNIDAD CAF", "UNIVERSAL", "MINIONS", "2026-06-17", "2026-07-17", "INTERIOR - EXTERIOR", ""], ["U 50M1", "UNIDAD CAF", "SECRETARÍA DE SALUD", "FENÓMENO DEL NIÑO", "2026-06-19", "2026-07-04", "INTERIOR - EXTERIOR", ""], ["U 53M1", "UNIDAD CAF", "SECRETARÍA DE SALUD", "PACCSA", "2026-06-19", "2026-07-01", "INTERIOR - EXTERIOR", ""], ["U 68M1", "UNIDAD CAF", "ANYELUZ", "RESULTADOS REALES", "2026-06-22", "2026-12-31", "INTERIOR - EXTERIOR", ""], ["U 52M1", "UNIDAD CAF", "FAMILIA", "60 AÑOS", "2026-06-30", "2026-11-15", "INTERIOR - EXTERIOR", ""], ["U 50M1", "UNIDAD CAF", "FLA", "ANTIOQUEÑO FLORES", "2026-07-14", "2026-08-14", "INTERIOR - EXTERIOR", ""], ["U 59M1", "UNIDAD CAF", "D1", "FERIA DE FLORES", "2026-07-29", "2026-08-30", "INTERIOR - EXTERIOR", ""], ["U 49M1", "UNIDAD CAF", "COLANTA", "EL CAMPO FLORECE", "2026-07-31", "2026-08-31", "INTERIOR - EXTERIOR", ""], ["U 61M1", "UNIDAD CAF", "LATAM", "IR MÁS ALTO", "2026-08-04", "2026-09-04", "INTERIOR - EXTERIOR", ""], ["U 50M1", "UNIDAD CAF", "H&S", "CONTROL CAÍDA", "2026-08-24", "2026-09-27", "INTERIOR - EXTERIOR", ""], ["U 78M1", "UNIDAD CAF", "FALABELLA", "CUENTA DE AHORROS", "2026-10-13", "2026-11-13", "INTERIOR - EXTERIOR", ""]], "savedAt": "2026-10-19T12:00:00.000Z", "file": "Historico_trenes_2019-2026_Base.xlsx"}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" data-own="1"></script>
+<script data-own="1">
+const PRISTINE = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+const DIAG = [];
+function report(where, e){
+  const msg = (e && (e.message||e.reason&&e.reason.message)) || String(e);
+  DIAG.push(where+": "+msg); try{ console.error(where, e); }catch(_){}
+  const d=document.getElementById("diag"); if(!d) return;
+  d.hidden=false; d.innerHTML="<b>Algo no funcionó en una parte del tablero.</b> El resto sigue operando. Si se repite, envíe este detalle:<br><code></code>";
+  d.querySelector("code").textContent=DIAG.slice(-3).join("  |  ");
+}
+window.addEventListener("error", ev=>{ if(ev.message) report("script", ev.error||ev.message); });
+window.addEventListener("unhandledrejection", ev=>{ report("promesa", ev.reason); ev.preventDefault(); });
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const MES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const MESC = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const LS_DATA = "trenes_dataset_v1", LS_SET = "trenes_settings_v1";
+const nf = n => Number(n).toLocaleString("es-CO");
+const nf1 = n => Number(n).toLocaleString("es-CO",{minimumFractionDigits:1,maximumFractionDigits:1});
+const dn = (y,m,d) => Math.round(Date.UTC(y,m-1,d)/864e5);
+const ymd = n => { const t=new Date(n*864e5); return {y:t.getUTCFullYear(), m:t.getUTCMonth()+1, d:t.getUTCDate()}; };
+const fmt = n => { const o=ymd(n); return String(o.d).padStart(2,"0")+"/"+String(o.m).padStart(2,"0")+"/"+o.y; };
+const mkey = (y,m) => y+"-"+String(m).padStart(2,"0");
+const parseKey = k => { const [y,m]=k.split("-").map(Number); return {y,m}; };
+const mStart = k => { const o=parseKey(k); return dn(o.y,o.m,1); };
+const mEnd = k => { const o=parseKey(k); return dn(o.y,o.m+1,1)-1; };
+const addM = (k,n) => { let {y,m}=parseKey(k); m+=n; while(m>12){m-=12;y++} while(m<1){m+=12;y--} return mkey(y,m); };
+const mLabel = k => { const o=parseKey(k); return MESC[o.m-1]+" "+String(o.y).slice(2); };
+const mLong = k => { const o=parseKey(k); return MES[o.m-1].charAt(0).toUpperCase()+MES[o.m-1].slice(1)+" "+o.y; };
+const clean = s => String(s==null?"":s).replace(/\s+/g," ").trim();
+const H = s => clean(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase();
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cssv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const normCod = c => { c=clean(c).toUpperCase(); const m=c.match(/^U\s*(\d+)\s*([A-Z]\d?)$/); return m?("U "+m[1]+m[2]):c; };
+const unitOf = c => { const m=c.match(/^U\s*(\d+)/); return m?"U "+m[1]:c; };
+const numOf = c => { const m=c.match(/(\d+)/); return m?+m[1]:9999; };
+const store = {
+  get(k){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ return false; } },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+
+/* ---------- datos ---------- */
+const EMBED = JSON.parse(document.getElementById("dataset").textContent);
+function toRows(arr){
+  return arr.map(a=>{
+    const [y1,m1,d1]=a[4].split("-").map(Number), [y2,m2,d2]=a[5].split("-").map(Number);
+    const cod=normCod(a[0]);
+    let cli=clean(a[2]); if(H(cli)==="METRO") cli="METRO DE MEDELLÍN";
+    return {cod, unit:unitOf(cod), tipo:clean(a[1]), cli, camp:clean(a[3]),
+            ini:dn(y1,m1,d1), fin:dn(y2,m2,d2), elem:clean(a[6]), obs:clean(a[7])};
+  });
+}
+let SRC = {rows:EMBED.rows, savedAt:EMBED.savedAt, file:EMBED.file, origin:"tablero"};
+const REPO_FILE = "Historico_trenes_2019-2026_Base.xlsx";
+let ROWS = toRows(SRC.rows);
+const settings = Object.assign({excl:"METRO DE MEDELLÍN", flota:null, limite:8, limBase:"total"}, store.get(LS_SET)||{});
+
+const TODAY = (()=>{ const t=new Date(); return dn(t.getFullYear(),t.getMonth()+1,t.getDate()); })();
+let ALL = {};
+function buildAll(){
+  const valid = ROWS.filter(r=>r.fin>=r.ini);
+  const minD = Math.min(...valid.map(r=>r.ini)), maxD = Math.max(...valid.map(r=>r.fin));
+  const a=ymd(minD), b=ymd(maxD);
+  ALL = {
+    clients:[...new Set(ROWS.map(r=>r.cli))].sort((x,y)=>x.localeCompare(y,"es")),
+    coches:[...new Set(ROWS.map(r=>r.cod))].sort((x,y)=>numOf(x)-numOf(y)||x.localeCompare(y)),
+    tipos:[...new Set(ROWS.map(r=>r.tipo||"(sin dato)"))].sort(),
+    elems:[...new Set(ROWS.map(r=>r.elem||"(sin dato)"))].sort(),
+    minKey:mkey(a.y,a.m), maxKey:mkey(b.y,b.m), minD, maxD
+  };
+  ALL.units = new Set(ROWS.map(r=>r.unit)).size;
+}
+buildAll();
+
+/* ---------- estado de filtros ---------- */
+const F = {from:ALL.minD, to:ALL.maxD, cli:new Set(), coche:new Set(), tipo:new Set(), elem:new Set(), metro:true};
+let selMonth = null, metric = "max", showAllCli=false, showAllCoche=false;
+let sortState = {k:"ini", dir:1};
+
+const isMetro = r => r.cli === settings.excl;
+function passBase(r){
+  if(F.cli.size && !F.cli.has(r.cli)) return false;
+  if(F.coche.size && !F.coche.has(r.cod)) return false;
+  if(F.tipo.size && !F.tipo.has(r.tipo||"(sin dato)")) return false;
+  if(F.elem.size && !F.elem.has(r.elem||"(sin dato)")) return false;
+  return r.fin>=r.ini;
+}
+
+/* coches al aire por dia: une tramos del mismo coche para no contar doble */
+function dailySeries(rows, P0, P1){
+  const len=P1-P0+1, diff=new Int32Array(len+1), by=new Map();
+  for(const r of rows){ const a=Math.max(r.ini,P0), b=Math.min(r.fin,P1); if(a>b) continue;
+    if(!by.has(r.cod)) by.set(r.cod,[]); by.get(r.cod).push([a,b]); }
+  for(const iv of by.values()){
+    iv.sort((x,y)=>x[0]-y[0]); let [s,e]=iv[0];
+    for(let i=1;i<=iv.length;i++){
+      if(i<iv.length && iv[i][0]<=e+1){ e=Math.max(e,iv[i][1]); continue; }
+      diff[s-P0]++; diff[e-P0+1]--; if(i<iv.length){ [s,e]=iv[i]; }
+    }
+  }
+  const out=new Int32Array(len); let c=0; for(let i=0;i<len;i++){ c+=diff[i]; out[i]=c; } return out;
+}
+
+function compute(){
+  const P0=F.from, P1=F.to;
+  const base=ROWS.filter(passBase);
+  const inP=base.filter(r=>r.ini<=P1 && r.fin>=P0);
+  const inPc=inP.filter(r=>!isMetro(r));
+  const dAll=dailySeries(base,P0,P1), dCom=dailySeries(base.filter(r=>!isMetro(r)),P0,P1);
+  const peak = arr => { let m=0,i=-1; for(let k=0;k<arr.length;k++) if(arr[k]>m){m=arr[k];i=k;} return {v:m, d:i>=0?P0+i:null}; };
+  const sum = arr => arr.reduce((a,b)=>a+b,0);
+  const months=[]; { const a0=ymd(P0), b0=ymd(P1); for(let k=mkey(a0.y,a0.m); k<=mkey(b0.y,b0.m); k=addM(k,1)) months.push(k); }
+  const M = months.map(k=>{
+    const a=Math.max(mStart(k),P0), b=Math.min(mEnd(k),P1), sl=x=>x.subarray(a-P0,b-P0+1);
+    const ov=inP.filter(r=>r.ini<=b&&r.fin>=a), ovc=ov.filter(r=>!isMetro(r));
+    const sA=sl(dAll), sC=sl(dCom);
+    return {k, a, b, max:[Math.max(...sA),Math.max(...sC)], avg:[sum(sA)/sA.length,sum(sC)/sC.length],
+      coches:[new Set(ov.map(r=>r.cod)).size,new Set(ovc.map(r=>r.cod)).size],
+      camps:[ov.length,ovc.length], clis:[new Set(ov.map(r=>r.cli)).size,new Set(ovc.map(r=>r.cli)).size]};
+  });
+  const hoy = base.filter(r=>r.ini<=TODAY&&r.fin>=TODAY);
+  const lim=settings.limite||Infinity, dLim = settings.limBase==="com"?dCom:dAll;
+  const runs=[]; let rs=-1, rmax=0;
+  for(let i=0;i<=dLim.length;i++){ const over=i<dLim.length && dLim[i]>lim;
+    if(over){ if(rs<0){rs=i;rmax=0;} rmax=Math.max(rmax,dLim[i]); } else if(rs>=0){ runs.push({a:P0+rs,b:P0+i-1,max:rmax}); rs=-1; } }
+  const overDays=runs.reduce((t,r)=>t+r.b-r.a+1,0);
+  return {P0,P1,base,inP,inPc,dAll,dCom,dLim,lim,runs,overDays,pkA:peak(dAll),pkC:peak(dCom),
+    avgA:sum(dAll)/dAll.length, avgC:sum(dCom)/dCom.length, dcA:sum(dAll), dcC:sum(dCom), M,
+    hoyA:new Set(hoy.map(r=>r.cod)).size, hoyC:new Set(hoy.filter(r=>!isMetro(r)).map(r=>r.cod)).size, hoyRows:hoy};
+}
+
+/* ---------- componentes de filtro ---------- */
+const NONE="\u0000ninguno";
+function multiSelect(host, label, getOpts, set, quick){
+  host.innerHTML = '<button type="button" aria-haspopup="true" aria-expanded="false"></button><div class="pop" hidden><input type="search" placeholder="Buscar"><div class="quick"></div><div class="opts"></div><div class="acts"><span><button type="button" class="linkbtn" data-a="all"></button><button type="button" class="linkbtn" data-a="none"></button></span><button type="button" class="linkbtn" data-a="close">Listo</button></div></div>';
+  const btn=host.querySelector("button"), pop=host.querySelector(".pop"), q=host.querySelector("input"), box=host.querySelector(".opts");
+  const bAll=host.querySelector('[data-a="all"]'), bNone=host.querySelector('[data-a="none"]'), qk=host.querySelector(".quick");
+  const isOn = o => set.size===0 || set.has(o);
+  const visibles = () => { const t=H(q.value); return getOpts().filter(o=>H(o).includes(t)); };
+  const normalize = () => { set.delete(NONE); const all=getOpts(); if(set.size===all.length && all.every(o=>set.has(o))) set.clear(); };
+  const materialize = () => { if(set.size===0) getOpts().forEach(o=>set.add(o)); set.delete(NONE); };
+  const paint = ()=>{ const all=getOpts().length, n=set.has(NONE)?0:(set.size===0?all:set.size);
+    btn.textContent = n===all ? label : (n===0 ? "Ninguno" : (n===1 ? [...set].find(o=>o!==NONE) : n+" de "+all)); };
+  const list = ()=>{ const v=visibles(), filt=q.value.trim()!=="";
+    bAll.textContent = filt?"Marcar visibles":"Marcar todos"; bNone.textContent = filt?"Quitar visibles":"Quitar todos";
+    box.innerHTML = v.map(o=>`<label><input type="checkbox" value="${esc(o)}" ${isOn(o)?"checked":""}> ${esc(o)}</label>`).join("") || '<div class="muted" style="padding:6px">Sin resultados</div>'; };
+  btn.onclick = e=>{ e.stopPropagation(); const open=pop.hidden; document.querySelectorAll(".ms .pop").forEach(p=>p.hidden=true);
+    document.querySelectorAll(".ms>button").forEach(b=>b.setAttribute("aria-expanded","false"));
+    pop.hidden=!open; btn.setAttribute("aria-expanded",String(open)); if(open){ q.value=""; list(); q.focus(); } };
+  pop.onclick = e=>e.stopPropagation();
+  q.oninput = list;
+  box.onchange = e=>{ const v=e.target.value; materialize(); e.target.checked?set.add(v):set.delete(v); if(set.size===0) set.add(NONE); finish(); };
+  bAll.onclick = ()=>{ if(q.value.trim()){ materialize(); visibles().forEach(o=>set.add(o)); } else set.clear(); finish(); };
+  bNone.onclick = ()=>{ materialize(); (q.value.trim()?visibles():getOpts()).forEach(o=>set.delete(o)); if(set.size===0) set.add(NONE); finish(); };
+  function finish(){ if(!set.has(NONE)) normalize(); list(); paint(); refresh(); }
+  if(quick){ qk.innerHTML = quick.map((b,i)=>`<button type="button" class="chip" data-q="${i}">${esc(b[0])}</button>`).join("");
+    qk.onclick = e=>{ const c=e.target.closest("[data-q]"); if(!c) return; set.clear(); quick[+c.dataset.q][1](getOpts()).forEach(o=>set.add(o)); if(set.size===0) set.add(NONE); finish(); }; }
+  host.querySelector('[data-a="close"]').onclick = ()=>{ pop.hidden=true; btn.setAttribute("aria-expanded","false"); };
+  paint(); host._paint = paint;
+}
+document.addEventListener("click", ()=>{ document.querySelectorAll(".ms .pop").forEach(p=>p.hidden=true); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape"){ document.querySelectorAll(".ms .pop").forEach(p=>p.hidden=true); } });
+
+function chipGroup(host, opts, set){
+  host.innerHTML = opts.map(o=>`<button type="button" class="chip" aria-pressed="${set.has(o)}" data-v="${esc(o)}">${esc(o.replace("INTERIOR - EXTERIOR","Int. y ext.").replace("EXTERIOR","Exterior").replace("UNIDAD ",""))}</button>`).join("");
+  host.onclick = e=>{ const b=e.target.closest(".chip"); if(!b) return; const v=b.dataset.v; set.has(v)?set.delete(v):set.add(v); b.setAttribute("aria-pressed",set.has(v)); refresh(); };
+}
+
+function setupFilters(){
+  const fF=$("#fFrom"), fT=$("#fTo");
+  fF.min=fT.min=iso(ALL.minD); fF.max=fT.max=iso(ALL.maxD); fF.value=iso(F.from); fT.value=iso(F.to);
+  fF.onchange=()=>{ const v=toDn(fF.value); if(v==null) return; setPeriod(v, Math.max(v,F.to), null); refresh(); };
+  fT.onchange=()=>{ const v=toDn(fT.value); if(v==null) return; setPeriod(Math.min(v,F.from), v, null); refresh(); };
+  multiSelect($("#msCli"),"Todos los clientes",()=>ALL.clients,F.cli,[["Todos menos Metro",o=>o.filter(c=>c!==settings.excl)],["Solo Metro",o=>o.filter(c=>c===settings.excl)]]);
+  multiSelect($("#msCoche"),"Todos los coches",()=>ALL.coches,F.coche);
+  chipGroup($("#chTipo"),ALL.tipos,F.tipo); chipGroup($("#chElem"),ALL.elems,F.elem);
+  $("#fMetro").onchange=e=>{ F.metro=e.target.checked; refresh(); };
+  $("#fReset").onclick=()=>{ F.cli.clear();F.coche.clear();F.tipo.clear();F.elem.clear();F.metro=true;$("#fMetro").checked=true;
+    setPeriod(ALL.minD,ALL.maxD,"all"); setupFilters(); refresh(); };
+  const now=ymd(TODAY), thisM=mkey(now.y,now.m);
+  const years=[]; for(let y=ymd(ALL.minD).y; y<=ymd(ALL.maxD).y; y++) years.push(y);
+  const P=[["all","Toda la historia",ALL.minD,ALL.maxD],["hoy","Hoy",TODAY,TODAY],["30","Últimos 30 días",TODAY-29,TODAY],
+    ["prox","Próximos 90 días",TODAY,TODAY+89],["mes","Este mes",mStart(thisM),mEnd(thisM)],["12","Últimos 12 meses",mStart(addM(thisM,-11)),mEnd(thisM)]]
+    .concat(years.map(y=>["y"+y,String(y),dn(y,1,1),dn(y,12,31)]));
+  $("#presets").innerHTML = P.map(p=>`<button type="button" class="chip" data-p="${p[0]}" data-f="${p[2]}" data-t="${p[3]}" aria-pressed="false">${p[1]}</button>`).join("");
+  $("#presets").onclick=e=>{ const b=e.target.closest(".chip"); if(!b) return; setPeriod(+b.dataset.f,+b.dataset.t,b.dataset.p); refresh(); };
+  markPreset();
+}
+let curPreset="all";
+function setPeriod(f,t,p){ const lo=Math.min(ALL.minD,TODAY), hi=Math.max(ALL.maxD,TODAY+89);
+  F.from=Math.max(lo,Math.min(f,hi)); F.to=Math.max(lo,Math.min(t,hi)); if(F.from>F.to) F.from=F.to;
+  $("#fFrom").value=iso(F.from); $("#fTo").value=iso(F.to); curPreset=p; selMonth=null; markPreset(); }
+function clearPreset(){ curPreset=null; markPreset(); }
+function markPreset(){ document.querySelectorAll("#presets .chip").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.p===curPreset))); }
+
+/* ---------- render ---------- */
+let C;
+function safe(name, fn){ try{ fn(); }catch(e){ report(name, e); } }
+function refresh(){
+  try{ C=compute(); }catch(e){ report("cálculo", e); return; }
+  safe("indicadores",renderKPIs); safe("gráfico",renderMonth); safe("alertas",renderAlerts); safe("detalle",renderDetail);
+  safe("vías",renderTracks); safe("rankings",renderRanks); safe("tabla",renderTable);
+}
+
+function kpi(t,v,alt,sub,cls){ return `<div class="kpi ${cls||""}"><h3>${t}</h3><div class="v">${v}</div>${alt!=null?`<div class="alt">${alt}</div>`:""}${sub?`<div class="sub">${sub}</div>`:""}</div>`; }
+function renderKPIs(){
+  const cochesP=new Set(C.inP.map(r=>r.cod)), unidP=new Set(C.inP.map(r=>r.unit));
+  const cliA=new Set(C.inP.map(r=>r.cli)).size, cliC=new Set(C.inPc.map(r=>r.cli)).size;
+  const fl=settings.flota;
+  let h="";
+  const pkL = settings.limBase==="com"?C.pkC:C.pkA, sobre = pkL.v>C.lim;
+  h+=kpi("Máximo al aire al mismo tiempo", nf(C.pkA.v), "sin Metro "+nf(C.pkC.v), sobre?("supera el límite de "+C.lim+" el "+fmt(pkL.d)):(C.pkA.d!=null?"el "+fmt(C.pkA.d)+", límite "+C.lim:"sin campañas"), sobre?"alert":"");
+  h+=kpi("Días por encima del límite de "+C.lim, nf(C.overDays), null, C.overDays?("en "+C.runs.length+(C.runs.length===1?" tramo":" tramos")+(settings.limBase==="com"?", sin contar Metro":"")):"el periodo cumple el límite", C.overDays?"alert":"");
+  h+=kpi("Promedio de coches al aire por día", nf1(C.avgA), "sin Metro "+nf1(C.avgC), fl?"ocupación promedio "+Math.round(C.avgA/fl*100)+"%":"");
+  h+=kpi("Coches con publicidad", nf(cochesP.size), null, "de "+ALL.coches.length+" en el histórico; "+unidP.size+" trenes (unidades)");
+  h+=kpi("Campañas al aire", nf(C.inP.length), "sin Metro "+nf(C.inPc.length), "activas en algún momento del periodo");
+  h+=kpi("Clientes al aire", nf(cliA), "sin Metro "+nf(cliC), "");
+  h+=kpi("Días-coche al aire", nf(C.dcA), "sin Metro "+nf(C.dcC), "días dentro del periodo");
+  const hoyL = settings.limBase==="com"?C.hoyC:C.hoyA;
+  h+=kpi("Al aire hoy", nf(C.hoyA), "sin Metro "+nf(C.hoyC), hoyL>C.lim?"supera el límite de "+C.lim:(fl?"ocupación hoy "+Math.round(C.hoyA/fl*100)+"%":fmt(TODAY)+", cupo para "+Math.max(0,C.lim-hoyL)+" más"), hoyL>C.lim?"alert":"");
+  $("#kpis").innerHTML=h;
+}
+
+let chM, chD;
+function chartColors(){ return {navy:cssv("--navy"), red:cssv("--red"), muted:cssv("--muted"), line:cssv("--line"), amber:cssv("--amber"), ink:cssv("--ink")}; }
+function baseOpts(col){
+  return {responsive:true, maintainAspectRatio:false, animation:false, interaction:{mode:"index",intersect:false},
+    plugins:{legend:{display:false}, tooltip:{backgroundColor:col.ink, titleColor:cssv("--bg"), bodyColor:cssv("--bg"), padding:9}},
+    scales:{x:{grid:{display:false}, ticks:{color:col.muted, autoSkip:true, maxRotation:0, font:{family:"Plus Jakarta Sans"}}},
+            y:{beginAtZero:true, grid:{color:col.line}, ticks:{color:col.muted, precision:0, font:{family:"Plus Jakarta Sans"}}}}};
+}
+function renderMonth(){
+  if(typeof Chart==="undefined"){ $("#cMonth").parentElement.innerHTML='<div class="empty">No se pudo cargar la librería de gráficos.</div>'; return; }
+  const col=chartColors(), alertC=cssv("--alert"), lim=C.lim, nd=C.P1-C.P0+1, daily = nd<=92;
+  const com = settings.limBase==="com";
+  let labels, A, B, L, over, titles, isAvg=false, showLim;
+  if(daily){
+    $("#mTitle").textContent="Día a día"; $("#mSub").textContent="Coches al aire cada día del periodo. Haga clic en un día para ver el detalle de su mes.";
+    $("#metricWrap").hidden=true;
+    const days=[]; for(let d=C.P0; d<=C.P1; d++) days.push(d);
+    labels=days.map(d=>{ const o=ymd(d); return String(o.d).padStart(2,"0")+"/"+String(o.m).padStart(2,"0"); });
+    A=Array.from(C.dAll); B=Array.from(C.dCom); titles=days.map(fmt);
+    over=(com?B:A).map(v=>v>lim); showLim=true;
+    C._clickKey=i=>{ const o=ymd(days[i]); return mkey(o.y,o.m); };
+  } else {
+    $("#mTitle").textContent="Mes a mes"; $("#mSub").textContent="Haga clic en un mes para ver el detalle día por día y los clientes al aire.";
+    $("#metricWrap").hidden=false; isAvg=metric==="avg";
+    labels=C.M.map(m=>mLabel(m.k)); A=C.M.map(m=>m[metric][0]); B=C.M.map(m=>m[metric][1]);
+    titles=C.M.map(m=>mLong(m.k)+((m.a!==mStart(m.k)||m.b!==mEnd(m.k))?` (del ${ymd(m.a).d} al ${ymd(m.b).d})`:""));
+    showLim = metric==="max" || metric==="avg";
+    over=C.M.map(m=>(com?m.max[1]:m.max[0])>lim);
+    C._clickKey=i=>C.M[i].k;
+  }
+  $("#lgLim").hidden=!over.some(Boolean);
+  const bg=labels.map((_,i)=>{ const k=C._clickKey(i); return (!daily && k===selMonth)?col.amber:(over[i]&&(daily||metric==="max")?alertC:col.navy); });
+  const ds=[
+    {type:"line", label:"Sin Metro", data:B, borderColor:col.red, backgroundColor:col.red, borderWidth:2, pointRadius:labels.length>40?0:2, tension:0, order:1},
+    {type:"bar", label:"Total", data:A, backgroundColor:bg, borderRadius:2, order:2, maxBarThickness:28}];
+  if(showLim && isFinite(lim)) ds.unshift({type:"line", label:"Límite", data:labels.map(()=>lim), borderColor:alertC, borderWidth:1.5, borderDash:[6,4], pointRadius:0, order:0});
+  const opts=baseOpts(col);
+  opts.scales.y.ticks.precision = isAvg?1:0;
+  opts.scales.y.suggestedMax = showLim&&isFinite(lim)? lim+1 : undefined;
+  opts.plugins.tooltip.callbacks={title:it=>titles[it[0].dataIndex], label:it=>" "+it.dataset.label+": "+(isAvg?nf1(it.raw):nf(it.raw)),
+    afterBody:it=>{ const i=it[0].dataIndex; return over[i]&&(daily||metric==="max")?"Supera el límite de "+lim:""; }};
+  opts.onClick=(e,els)=>{ if(!els.length) return; const k=C._clickKey(els[0].index); setTimeout(()=>{ selMonth = (!daily&&selMonth===k)?null:k; renderMonth(); renderDetail(); if(selMonth) $("#detail").scrollIntoView({behavior:"smooth",block:"start"}); },0); };
+  opts.onHover=(e,els)=>{ e.native.target.style.cursor=els.length?"pointer":"default"; };
+  if(chM) chM.destroy(); chM=new Chart($("#cMonth"),{data:{labels,datasets:ds},options:opts});
+}
+
+let showAllAlerts=false;
+function renderAlerts(){
+  const box=$("#alerts");
+  if(!C.runs.length){ box.hidden=true; return; }
+  box.hidden=false;
+  $("#aSub").textContent=`${C.runs.length} ${C.runs.length===1?"tramo":"tramos"} con más de ${C.lim} coches al aire a la vez${settings.limBase==="com"?" sin contar Metro":""}, ${nf(C.overDays)} días en total. Haga clic en uno para ver qué coches y clientes lo causaron.`;
+  const list=[...C.runs].sort((x,y)=>y.a-x.a), lim2=showAllAlerts?list.length:8;
+  $("#aList").innerHTML=list.slice(0,lim2).map(r=>`<button type="button" class="arow" data-a="${r.a}" data-b="${r.b}"><b>${r.max}</b><span>${r.a===r.b?"El "+fmt(r.a):"Del "+fmt(r.a)+" al "+fmt(r.b)}</span><span class="muted">${r.b-r.a+1} ${r.b===r.a?"día":"días"}, ${r.max-C.lim} de más</span></button>`).join("");
+  const m=$("#aMore"); m.hidden=list.length<=8; m.textContent=showAllAlerts?"Ver menos":"Ver los "+list.length+" tramos";
+}
+$("#aMore").onclick=()=>{ showAllAlerts=!showAllAlerts; renderAlerts(); };
+$("#aList").onclick=e=>{ const b=e.target.closest(".arow"); if(!b) return; setPeriod(+b.dataset.a,+b.dataset.b,null); refresh(); $("#tracks").scrollIntoView({behavior:"smooth",block:"center"}); };
+
+function renderDetail(){
+  const box=$("#detail");
+  const mm = selMonth && C.M.find(x=>x.k===selMonth);
+  if(!mm){ box.hidden=true; if(chD){chD.destroy();chD=null;} return; }
+  box.hidden=false;
+  const a=mm.a, b=mm.b, rows=C.inP.filter(r=>r.ini<=b&&r.fin>=a).sort((x,y)=>numOf(x.cod)-numOf(y.cod)||x.ini-y.ini);
+  const m=C.M.find(x=>x.k===selMonth);
+  $("#dTitle").textContent=mLong(selMonth)+((a!==mStart(selMonth)||b!==mEnd(selMonth))?` (del ${ymd(a).d} al ${ymd(b).d})`:"");
+  $("#dSub").textContent=`${m.camps[0]} campañas (${m.camps[1]} sin Metro), ${m.coches[0]} coches y ${m.clis[0]} clientes al aire. Máximo en un mismo día: ${m.max[0]}.`;
+  const clis=[...new Set(rows.map(r=>r.cli))].sort((x,y)=>x.localeCompare(y,"es"));
+  $("#dClients").innerHTML=clis.map(c=>`<span class="${c===settings.excl?"met":""}">${esc(c)}</span>`).join("");
+  $("#dTable").innerHTML="<thead><tr><th>Coche</th><th>Cliente</th><th>Campaña</th><th>Inicio</th><th>Final</th><th class='num'>Días en el tramo</th></tr></thead><tbody>"+
+    rows.map(r=>`<tr class="${isMetro(r)?"met":""}"><td>${esc(r.cod)}</td><td>${esc(r.cli)}</td><td>${esc(r.camp)}</td><td>${fmt(r.ini)}</td><td>${fmt(r.fin)}</td><td class="num">${Math.min(r.fin,b)-Math.max(r.ini,a)+1}</td></tr>`).join("")+"</tbody>";
+  if(typeof Chart==="undefined") return;
+  const col=chartColors(), days=[]; for(let d=a; d<=b; d++) days.push(d);
+  const A=days.map(d=>C.dAll[d-C.P0]), B=days.map(d=>C.dCom[d-C.P0]);
+  const opts=baseOpts(col); opts.plugins.tooltip.callbacks={title:it=>fmt(days[it[0].dataIndex])};
+  opts.scales.y.suggestedMax = isFinite(C.lim)? C.lim+1 : undefined;
+  if(chD) chD.destroy();
+  chD=new Chart($("#cDay"),{type:"line",data:{labels:days.map(d=>ymd(d).d),datasets:[
+    {label:"Límite",data:days.map(()=>C.lim),borderColor:cssv("--alert"),borderWidth:1.5,borderDash:[6,4],pointRadius:0},
+    {label:"Total",data:A,borderColor:col.navy,backgroundColor:col.navy,stepped:true,pointRadius:0,borderWidth:2},
+    {label:"Sin Metro",data:B,borderColor:col.red,backgroundColor:col.red,stepped:true,pointRadius:0,borderWidth:2}]},options:opts});
+}
+
+const tip=$("#tip");
+function showTip(html,x,y){ tip.innerHTML=html; tip.hidden=false; const w=tip.offsetWidth,h=tip.offsetHeight;
+  tip.style.left=Math.min(x+14, innerWidth-w-8)+"px"; tip.style.top=(y+h+20>innerHeight? y-h-12 : y+14)+"px"; }
+function renderTracks(){
+  const host=$("#tracks");
+  let lanes = ALL.coches.filter(c=>!F.coche.size||F.coche.has(c));
+  const rows = C.base.filter(r=>F.metro||!isMetro(r));
+  const tiposOk = c => !F.tipo.size || ROWS.some(r=>r.cod===c && F.tipo.has(r.tipo||"(sin dato)"));
+  lanes = lanes.filter(tiposOk);
+  // libres hoy
+  const busy=new Set(ROWS.filter(r=>r.ini<=TODAY&&r.fin>=TODAY).map(r=>r.cod));
+  const libres=lanes.filter(c=>!busy.has(c));
+  $("#free").innerHTML = `<b>${libres.length}</b> de ${lanes.length} coches libres hoy (${fmt(TODAY)}), según el histórico.`+
+    (libres.length?`<div class="freelist">${libres.map(c=>`<span>${esc(c)}</span>`).join("")}</div>`:"");
+  if(!lanes.length){ host.innerHTML='<div class="empty" style="grid-column:1/-1">No hay coches con estos filtros.</div>'; return; }
+  const P0=C.P0, P1=C.P1, nd=P1-P0+1, nMonths=C.M.length;
+  const avail = Math.max(300, host.clientWidth-80);
+  const W = Math.max(avail, nd<=92? nd*12 : nMonths*16), px = W/nd, RH=20, TOP=28, Hh=TOP+lanes.length*RH+4;
+  let s=`<svg width="${W}" height="${Hh}" role="img" aria-label="Campañas por coche en el tiempo">`;
+  lanes.forEach((c,i)=>{ s+=`<rect class="lane" x="0" y="${TOP+i*RH+4}" width="${W}" height="${RH-8}" rx="2"></rect>`; });
+  const line = cssv("--line"), muted=cssv("--muted");
+  C.M.forEach(m=>{ const x=Math.max(0,(mStart(m.k)-P0)*px), o=parseKey(m.k);
+    if(o.m===1||m===C.M[0]){ s+=`<line x1="${x}" x2="${x}" y1="0" y2="${Hh}" stroke="${line}" stroke-width="1"></line><text x="${x+3}" y="12" font-size="12" font-weight="600" fill="${muted}" font-family="Plus Jakarta Sans, sans-serif">${o.y}</text>`; }
+    if(nMonths<=30 && nd>92){ s+=`<text x="${x+2}" y="24" font-size="10" fill="${muted}" font-family="Plus Jakarta Sans, sans-serif">${MESC[o.m-1]}</text>`; if(o.m!==1) s+=`<line x1="${x}" x2="${x}" y1="${TOP}" y2="${Hh}" stroke="${line}" stroke-width=".5" stroke-dasharray="2 3"></line>`; }
+  });
+  if(nd<=92){ for(let d=P0; d<=P1; d++){ const o=ymd(d), x=(d-P0)*px; if(o.d===1||d===P0||(nd<=31)||((d-P0)%7===0)){
+      s+=`<text x="${x+2}" y="24" font-size="10" fill="${muted}" font-family="Plus Jakarta Sans, sans-serif">${nd<=31?o.d:String(o.d).padStart(2,"0")+"/"+String(o.m).padStart(2,"0")}</text><line x1="${x}" x2="${x}" y1="${TOP}" y2="${Hh}" stroke="${line}" stroke-width=".5" stroke-dasharray="2 3"></line>`; } } }
+  C.runs.forEach(r=>{ const x=(r.a-P0)*px, w=Math.max(2,(r.b-r.a+1)*px); s+=`<rect x="${x.toFixed(2)}" y="${TOP-5}" width="${w.toFixed(2)}" height="4" fill="${cssv("--alert")}"><title>Más de ${C.lim} coches al aire: ${fmt(r.a)} a ${fmt(r.b)} (hasta ${r.max})</title></rect>`; });
+  const idx=new Map(lanes.map((c,i)=>[c,i]));
+  const hlOn = F.cli.size>0 && F.cli.size<=5 && !F.cli.has(NONE);
+  rows.forEach((r,ri)=>{ if(!idx.has(r.cod)) return; const a=Math.max(r.ini,P0), b=Math.min(r.fin,P1); if(a>b) return;
+    const x=(a-P0)*px, w=Math.max(1.5,(b-a+1)*px), y=TOP+idx.get(r.cod)*RH+3;
+    const cls = hlOn && F.cli.has(r.cli) ? "hl" : (isMetro(r)?"met":"com");
+    s+=`<rect class="seg ${cls}" data-i="${ROWS.indexOf(r)}" x="${x.toFixed(2)}" y="${y}" width="${w.toFixed(2)}" height="${RH-6}" rx="2"></rect>`; });
+  if(TODAY>=P0&&TODAY<=P1){ const x=(TODAY-P0+.5)*px; s+=`<line x1="${x}" x2="${x}" y1="${TOP-4}" y2="${Hh}" stroke="${cssv("--red")}" stroke-width="2"></line>`; }
+  s+="</svg>";
+  host.innerHTML=`<div class="tlabels"><div class="hd"></div>${lanes.map(c=>`<div data-c="${esc(c)}" title="Filtrar este coche">${esc(c)}</div>`).join("")}</div><div class="tscroll">${s}</div>`;
+  const sc=host.querySelector(".tscroll");
+  if(TODAY>=P0&&TODAY<=P1 && W>avail) sc.scrollLeft=Math.max(0,(TODAY-P0)*px-avail*0.75);
+  const svg=host.querySelector("svg");
+  const tipFor = el => { const r=ROWS[+el.dataset.i]; return `<b>${esc(r.cli)}</b>${esc(r.camp)}<br>${esc(r.cod)}: ${fmt(r.ini)} a ${fmt(r.fin)} (${r.fin-r.ini+1} días)${r.obs?"<br>"+esc(r.obs):""}`; };
+  svg.addEventListener("mousemove",e=>{ const el=e.target.closest(".seg"); if(!el){tip.hidden=true;return;} try{ showTip(tipFor(el),e.clientX,e.clientY); }catch(_){ tip.hidden=true; } });
+  svg.addEventListener("mouseleave",()=>tip.hidden=true);
+  svg.addEventListener("click",e=>{ const el=e.target.closest(".seg"); if(!el){tip.hidden=true;return;} e.stopPropagation(); showTip(tipFor(el),e.clientX,e.clientY); });
+  host.querySelector(".tlabels").onclick=e=>{ const d=e.target.closest("[data-c]"); if(!d) return; const c=d.dataset.c;
+    if(F.coche.size===1&&F.coche.has(c)) F.coche.clear(); else { F.coche.clear(); F.coche.add(c); } $("#msCoche")._paint(); refresh(); };
+}
+document.addEventListener("click",()=>{ tip.hidden=true; });
+
+function renderRanks(){
+  const P0=C.P0,P1=C.P1,nd=P1-P0+1, rows=C.inP.filter(r=>F.metro||!isMetro(r));
+  const dIn=r=>Math.min(r.fin,P1)-Math.max(r.ini,P0)+1;
+  const cm=new Map(); rows.forEach(r=>{ const o=cm.get(r.cli)||{d:0,n:0}; o.d+=dIn(r); o.n++; cm.set(r.cli,o); });
+  const cl=[...cm.entries()].sort((a,b)=>b[1].d-a[1].d);
+  const mx=cl.length?cl[0][1].d:1, lim=showAllCli?cl.length:12;
+  $("#rCli").innerHTML = cl.length? cl.slice(0,lim).map(([k,o])=>`<div class="rk"><span class="n" title="${esc(k)}">${esc(k)}</span><span class="bar"><i class="${k===settings.excl?"met":""}" style="width:${(o.d/mx*100).toFixed(1)}%"></i></span><span class="num">${nf(o.d)} d · ${o.n}</span></div>`).join("") : '<div class="empty">Sin campañas en el periodo.</div>';
+  const bm=$("#rCliMore"); bm.hidden=cl.length<=12; bm.textContent=showAllCli?"Ver menos":"Ver los "+cl.length;
+  // coches: dias ocupados (union) y %
+  const byC=new Map(); rows.forEach(r=>{ if(!byC.has(r.cod)) byC.set(r.cod,[]); byC.get(r.cod).push([Math.max(r.ini,P0),Math.min(r.fin,P1)]); });
+  const co=[...byC.entries()].map(([k,iv])=>{ iv.sort((a,b)=>a[0]-b[0]); let t=0,[s,e]=iv[0]; for(let i=1;i<=iv.length;i++){ if(i<iv.length&&iv[i][0]<=e+1){e=Math.max(e,iv[i][1]);continue;} t+=e-s+1; if(i<iv.length)[s,e]=iv[i]; } return [k,t,iv.length]; })
+    .sort((a,b)=>b[1]-a[1]);
+  const lim2=showAllCoche?co.length:12;
+  $("#rCoche").innerHTML = co.length? co.slice(0,lim2).map(([k,t,n])=>`<div class="rk"><span class="n">${esc(k)}</span><span class="bar"><i style="width:${(t/nd*100).toFixed(1)}%"></i></span><span class="num">${nf(t)} d · ${Math.round(t/nd*100)}%</span></div>`).join("") : '<div class="empty">Sin campañas en el periodo.</div>';
+  const bc=$("#rCocheMore"); bc.hidden=co.length<=12; bc.textContent=showAllCoche?"Ver menos":"Ver los "+co.length;
+}
+$("#rCliMore").onclick=()=>{ showAllCli=!showAllCli; renderRanks(); };
+$("#rCocheMore").onclick=()=>{ showAllCoche=!showAllCoche; renderRanks(); };
+
+const COLS=[["cod","Coche"],["unit","Tren"],["tipo","Tipo"],["cli","Cliente"],["camp","Campaña"],["ini","Inicio"],["fin","Final"],["dias","Días",1],["dp","Días en el periodo",1],["elem","Elemento"],["obs","Observaciones"]];
+function tableRows(){
+  const q=H($("#tSearch").value), P0=C.P0,P1=C.P1;
+  let rows=C.inP.filter(r=>F.metro||!isMetro(r)).map(r=>Object.assign({},r,{dias:r.fin-r.ini+1, dp:Math.min(r.fin,P1)-Math.max(r.ini,P0)+1}));
+  if(q) rows=rows.filter(r=>H(r.cli+" "+r.camp+" "+r.cod+" "+r.obs).includes(q));
+  const k=sortState.k,d=sortState.dir;
+  rows.sort((a,b)=>{ const x=a[k],y=b[k]; if(k==="cod"||k==="unit") return (numOf(x)-numOf(y)||String(x).localeCompare(String(y)))*d;
+    return (typeof x==="number"? x-y : String(x).localeCompare(String(y),"es"))*d || (a.ini-b.ini); });
+  return rows;
+}
+function renderTable(){
+  const rows=tableRows();
+  $("#tSub").textContent=`${rows.length} campañas entre ${fmt(C.P0)} y ${fmt(C.P1)}.`;
+  $("#tMain").innerHTML="<thead><tr>"+COLS.map(c=>`<th class="${c[2]?"num":""}" data-k="${c[0]}" aria-sort="${sortState.k===c[0]?(sortState.dir>0?"ascending":"descending"):"none"}">${c[1]}</th>`).join("")+"</tr></thead><tbody>"+
+    (rows.length? rows.map(r=>`<tr class="${isMetro(r)?"met":""}">${COLS.map(c=>{ let v=r[c[0]]; if(c[0]==="ini"||c[0]==="fin") v=fmt(v); return `<td class="${c[2]?"num":""}">${esc(v==null?"":v)}</td>`; }).join("")}</tr>`).join("")
+     : `<tr><td colspan="${COLS.length}" class="empty">No hay campañas con estos filtros.</td></tr>`)+"</tbody>";
+}
+$("#tMain").onclick=e=>{ const th=e.target.closest("th"); if(!th) return; const k=th.dataset.k; sortState = sortState.k===k?{k,dir:-sortState.dir}:{k,dir:1}; renderTable(); };
+$("#tSearch").oninput=renderTable;
+
+/* ---------- carga de Excel ---------- */
+function toDn(v){
+  if(v==null||v==="") return null;
+  if(typeof v==="number") return Math.floor(v)-25569;
+  if(v instanceof Date) return dn(v.getFullYear(),v.getMonth()+1,v.getDate());
+  const s=String(v).trim(); let m;
+  if((m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/))) return dn(+m[3],+m[2],+m[1]);
+  if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return dn(+m[1],+m[2],+m[3]);
+  return null;
+}
+const iso = n => { const o=ymd(n); return o.y+"-"+String(o.m).padStart(2,"0")+"-"+String(o.d).padStart(2,"0"); };
+function parseWorkbook(buf, fname){
+  const wb=XLSX.read(buf,{type:"array"});
+  const names=[...wb.SheetNames].sort((a,b)=>(H(b)==="HISTORICO")-(H(a)==="HISTORICO"));
+  for(const n of names){
+    const aoa=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:true,defval:null});
+    for(let hr=0; hr<Math.min(15,aoa.length); hr++){
+      const hdr=(aoa[hr]||[]).map(H);
+      const find = f => hdr.findIndex(f);
+      const ix={cod:find(h=>h.startsWith("CODIGO")), tipo:find(h=>h.includes("TIPO DE TREN")||h==="ESTACION"),
+        cli:find(h=>h==="CLIENTE"), camp:find(h=>h.startsWith("CAMPANA")), ini:find(h=>h.includes("INICIO")),
+        fin:find(h=>h.includes("FINAL")||h==="FECHA FIN"||h==="FIN"), elem:find(h=>h.includes("ELEMENTO")), obs:find(h=>h.startsWith("OBSERV"))};
+      if(ix.cli<0||ix.ini<0||ix.fin<0||ix.cod<0) continue;
+      const out=[], warn=[]; let skipped=0, sinElem=0, arreglados=0;
+      for(let i=hr+1;i<aoa.length;i++){
+        const r=aoa[i]; if(!r) continue; const g=k=>ix[k]>=0?r[ix[k]]:null;
+        const rawC=g("cod"), rawCli=g("cli");
+        if(rawC==null&&rawCli==null) continue;
+        const ini=toDn(g("ini")), fin=toDn(g("fin"));
+        if(!rawC||!rawCli||ini==null||fin==null){ skipped++; continue; }
+        const cod=normCod(rawC); if(cod!==String(rawC)||clean(rawCli)!==String(rawCli)) arreglados++;
+        if(!clean(g("elem"))) sinElem++;
+        if(fin<ini) warn.push(`Fila ${i+1}: ${clean(rawCli)} en ${cod} termina (${fmt(fin)}) antes de empezar (${fmt(ini)}). No se cuenta hasta corregirla.`);
+        out.push([cod,clean(g("tipo")),clean(rawCli),clean(g("camp")),iso(ini),iso(fin),clean(g("elem")),clean(g("obs"))]);
+      }
+      if(!out.length) continue;
+      const by=new Map(); out.forEach(a=>{ if(!by.has(a[0])) by.set(a[0],[]); by.get(a[0]).push(a); });
+      for(const [c,l] of by){ l.sort((a,b)=>a[4].localeCompare(b[4])); for(let i=1;i<l.length;i++){ if(l[i][4]<=l[i-1][5]) warn.push(`${c}: ${l[i-1][2]} (hasta ${l[i-1][5].split("-").reverse().join("/")}) se cruza con ${l[i][2]} (desde ${l[i][4].split("-").reverse().join("/")}).`); } }
+      return {rows:out, sheet:n, skipped, sinElem, arreglados, warn};
+    }
+  }
+  throw new Error("No encontré una hoja con las columnas Código, Cliente, Fecha inicio y Fecha final.");
+}
+let xlsxP=null;
+function loadXLSX(){
+  if(typeof XLSX!=="undefined") return Promise.resolve(true);
+  if(!xlsxP) xlsxP=new Promise(res=>{ const sc=document.createElement("script"); sc.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    sc.setAttribute("data-own","1"); sc.onload=()=>res(typeof XLSX!=="undefined"); sc.onerror=()=>{ xlsxP=null; res(false); }; document.head.appendChild(sc); });
+  return xlsxP;
+}
+async function handleFile(f){
+  if(!f) return;
+  const msgs=$("#msgs");
+  msgs.innerHTML='<p class="muted">Preparando el lector de Excel…</p>';
+  if(!(await loadXLSX())){ msgs.innerHTML='<p class="err">No se pudo cargar el lector de Excel. Revise la conexión e intente de nuevo.</p>'; return; }
+  msgs.innerHTML='<p class="muted">Leyendo '+esc(f.name)+'…</p>';
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const res=parseWorkbook(new Uint8Array(rd.result), f.name);
+      lastFile={buf:new Uint8Array(rd.result), name:f.name, n:res.rows.length}; ghUI();
+      const stamp=new Date().toISOString();
+      SRC={rows:res.rows, savedAt:stamp, file:f.name, origin:"local"};
+      applyData();
+      const rangeTxt = `${fmt(ALL.minD)} a ${fmt(ALL.maxD)}`;
+      msgs.innerHTML = `<p class="ok">Listo: ${res.rows.length} campañas leídas de la hoja ${esc(res.sheet)}, ${ALL.coches.length} coches, ${ALL.clients.length} clientes, del ${rangeTxt}.</p>`+
+        `<ul>${res.skipped?`<li>${res.skipped} filas sin código, cliente o fechas se omitieron.</li>`:""}${res.sinElem?`<li>${res.sinElem} campañas sin tipo de elemento.</li>`:""}${res.arreglados?`<li>${res.arreglados} filas tenían espacios de más o el código escrito distinto (ej. "U 49 M1"); se corrigieron solo aquí, no en su Excel.</li>`:""}${res.warn.map(w=>`<li class="err">${esc(w)}</li>`).join("")}</ul>`+
+        `<p class="muted">Esto es una vista previa en su navegador. Si los datos están bien, use «Publicar este Excel en GitHub» para que todos lo vean.</p>`;
+    }catch(err){ msgs.innerHTML='<p class="err">'+esc(err.message||"No se pudo leer el archivo.")+'</p><p class="muted">Verifique que sea el Excel del histórico y que la fila de encabezados tenga Código tren, Cliente, Fecha inicio y Fecha final.</p>'; }
+  };
+  rd.onerror=()=>{ msgs.innerHTML='<p class="err">No se pudo leer el archivo.</p>'; };
+  rd.readAsArrayBuffer(f);
+}
+const drop=$("#drop"), fileIn=$("#file");
+drop.onclick=()=>fileIn.click();
+drop.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); fileIn.click(); } };
+fileIn.onchange=()=>{ handleFile(fileIn.files[0]); fileIn.value=""; };
+["dragenter","dragover"].forEach(t=>drop.addEventListener(t,e=>{ e.preventDefault(); drop.classList.add("over"); }));
+["dragleave","drop"].forEach(t=>drop.addEventListener(t,e=>{ e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop",e=>handleFile(e.dataTransfer.files[0]));
+
+function applyData(){
+  ROWS=toRows(SRC.rows); buildAll();
+  F.cli.clear();F.coche.clear();F.tipo.clear();F.elem.clear(); selMonth=null;
+  setPeriod(ALL.minD,ALL.maxD,"all"); setupFilters(); setupSettings(); renderStatus(); refresh();
+}
+function renderStatus(){
+  const when = SRC.savedAt ? new Date(SRC.savedAt).toLocaleDateString("es-CO",{day:"2-digit",month:"2-digit",year:"numeric"}) : "";
+  const orig = SRC.origin==="github" ? "leído del repositorio, actualizado" : SRC.origin==="local" ? "vista previa en este navegador," : "copia incluida en la página,";
+  $("#status").innerHTML=`<span><b>${ROWS.length}</b> campañas, <b>${ALL.coches.length}</b> coches, <b>${ALL.units}</b> trenes</span><span>${esc(SRC.file||"")}, ${orig} ${when}</span><a class="btn" href="#datos">Cargar Excel</a>`;
+  $("#bRestore").hidden = SRC.origin!=="local";
+}
+function setupSettings(){
+  const s=$("#sExcl"); s.innerHTML=ALL.clients.map(c=>`<option ${c===settings.excl?"selected":""}>${esc(c)}</option>`).join("");
+  if(!ALL.clients.includes(settings.excl)) s.insertAdjacentHTML("afterbegin",`<option selected>${esc(settings.excl)}</option>`);
+  s.onchange=()=>{ settings.excl=s.value; store.set(LS_SET,settings); refresh(); };
+  const fl=$("#sFlota"); fl.value=settings.flota||"";
+  fl.onchange=()=>{ const v=parseInt(fl.value,10); settings.flota = v>0?v:null; store.set(LS_SET,settings); renderKPIs(); };
+  const sl=$("#sLim"); sl.value=settings.limite||"";
+  sl.onchange=()=>{ const v=parseInt(sl.value,10); settings.limite = v>0?v:8; sl.value=settings.limite; store.set(LS_SET,settings); refresh(); };
+  const sb=$("#sLimBase"); sb.value=settings.limBase;
+  sb.onchange=()=>{ settings.limBase=sb.value; store.set(LS_SET,settings); refresh(); };
+}
+$("#bRestore").onclick=()=>{ location.reload(); };
+$("#dClose").onclick=()=>{ selMonth=null; renderMonth(); renderDetail(); };
+$("#metric").onchange=e=>{ metric=e.target.value; renderMonth(); };
+
+/* ---------- descarga CSV ---------- */
+function csv(){
+  const rows=tableRows(), sep=";", q=v=>{ v=String(v==null?"":v); return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const head=COLS.map(c=>c[1]).join(sep), body=rows.map(r=>COLS.map(c=>q(c[0]==="ini"||c[0]==="fin"?fmt(r[c[0]]):r[c[0]])).join(sep)).join("\r\n");
+  return "\ufeff"+head+"\r\n"+body;
+}
+$("#tExport").hidden=false;
+$("#tExport").onclick=()=>{
+  const url=URL.createObjectURL(new Blob([csv()],{type:"text/csv;charset=utf-8"}));
+  const a=document.createElement("a"); a.href=url; a.download=`campanas_${iso(F.from)}_a_${iso(F.to)}.csv`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),2000);
+};
+
+/* ---------- publicar el Excel en GitHub con la llave del dueño ---------- */
+const LS_TOK="trenes_gh_token";
+const GH=(()=>{ const h=location.hostname, seg=location.pathname.split("/").filter(Boolean);
+  return h.endsWith(".github.io") ? {owner:h.split(".")[0], repo:seg[0]||h} : {owner:"jeisonum", repo:"historico-trenes"}; })();
+let lastFile=null;
+const getTok=()=>{ try{ return localStorage.getItem(LS_TOK)||""; }catch(e){ return ""; } };
+function ghUI(){
+  const tok=getTok();
+  $("#ghTokRow").hidden=!!tok; $("#ghForget").hidden=!tok;
+  $("#ghState").textContent = tok ? "Llave guardada en este navegador. Solo quien tenga la llave puede publicar." :
+    "Para publicar desde aquí, pegue una vez su llave de GitHub. Queda guardada solo en este navegador.";
+  $("#ghPub").disabled = !(tok && lastFile);
+  if(lastFile && tok) $("#ghNote").textContent=`Listo para publicar ${lastFile.name} (${lastFile.n} campañas). Se guardará en GitHub como ${REPO_FILE}.`;
+}
+$("#ghSave").onclick=()=>{ const v=$("#ghTok").value.trim(); if(!v) return; try{ localStorage.setItem(LS_TOK,v); }catch(e){ $("#ghNote").textContent="Este navegador no permite guardar la llave."; return; } $("#ghTok").value=""; ghUI(); };
+$("#ghForget").onclick=()=>{ try{ localStorage.removeItem(LS_TOK); }catch(e){} ghUI(); };
+function b64(u8){ let s=""; for(let i=0;i<u8.length;i+=0x8000) s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000)); return btoa(s); }
+$("#ghPub").onclick=async()=>{
+  const tok=getTok(); if(!tok||!lastFile) return;
+  const b=$("#ghPub"), note=$("#ghNote"); b.disabled=true; note.textContent="Publicando en GitHub…";
+  const url=`https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/${encodeURIComponent(REPO_FILE)}`;
+  const hd={"Authorization":"Bearer "+tok,"Accept":"application/vnd.github+json"};
+  try{
+    let sha; const g=await fetch(url+"?ref=main",{headers:hd,cache:"no-store"});
+    if(g.status===401) throw new Error("La llave no es válida o ya venció. Use «Olvidar la llave» y pegue una nueva.");
+    if(g.ok) sha=(await g.json()).sha; else if(g.status!==404) throw new Error("GitHub respondió con error "+g.status+".");
+    const d=new Date(), fecha=String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+d.getFullYear();
+    const r=await fetch(url,{method:"PUT",headers:hd,body:JSON.stringify({message:`Actualiza histórico de trenes (${fecha})`,content:b64(lastFile.buf),sha,branch:"main"})});
+    if(r.status===401) throw new Error("La llave no es válida o ya venció. Use «Olvidar la llave» y pegue una nueva.");
+    if(r.status===403||r.status===404) throw new Error("La llave no tiene permiso para escribir en este repositorio. Revise que tenga «Contents: Read and write» sobre "+GH.repo+".");
+    if(!r.ok) throw new Error("GitHub respondió con error "+r.status+".");
+    note.innerHTML='<b style="color:var(--navy)">Publicado.</b> En 1 o 2 minutos todos los que abran el link verán los datos nuevos.';
+    lastFile=null;
+  }catch(e){ note.textContent=e.message||"No se pudo publicar."; b.disabled=false; }
+};
+ghUI();
+
+/* ---------- leer el Excel del repositorio (GitHub Pages) ---------- */
+async function loadRepo(){
+  if(location.protocol==="file:") return;
+  const msgs=$("#msgs");
+  try{
+    if(!(await loadXLSX())) throw new Error("No se pudo cargar el lector de Excel.");
+    const resp=await fetch(encodeURI(REPO_FILE)+"?v="+Date.now(),{cache:"no-store"});
+    if(!resp.ok) throw new Error(`No encontré el archivo ${REPO_FILE} en el repositorio (error ${resp.status}).`);
+    const lm=resp.headers.get("Last-Modified");
+    const res=parseWorkbook(new Uint8Array(await resp.arrayBuffer()), REPO_FILE);
+    SRC={rows:res.rows, savedAt:(lm?new Date(lm):new Date()).toISOString(), file:REPO_FILE, origin:"github"};
+    applyData();
+    msgs.innerHTML = `<p class="ok">Datos leídos del repositorio: ${res.rows.length} campañas.</p>`+
+      (res.warn.length||res.skipped ? `<ul>${res.skipped?`<li>${res.skipped} filas sin código, cliente o fechas se omitieron.</li>`:""}${res.warn.map(w=>`<li class="err">${esc(w)}</li>`).join("")}</ul>` : "");
+  }catch(e){
+    msgs.innerHTML='<p class="err">'+esc(e.message||"No se pudo leer el Excel del repositorio.")+'</p><p class="muted">Se muestran los datos incluidos en la página.</p>';
+  }
+}
+
+/* ---------- arranque ---------- */
+safe("filtros",setupFilters); safe("ajustes",setupSettings); safe("estado",renderStatus); refresh();
+loadRepo();
+let rz; addEventListener("resize",()=>{ clearTimeout(rz); rz=setTimeout(()=>safe("vías",renderTracks),150); });
+if(window.matchMedia) matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>refresh());
+new MutationObserver(()=>refresh()).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+})();
+</script>
+</body>
+</html>
